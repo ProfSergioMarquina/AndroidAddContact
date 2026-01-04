@@ -1,0 +1,7 @@
+# No external dependencies required
+# This script uses only Python standard library
+#
+# Python 3.7+ is required for:
+# - dataclasses
+# - typing.Optional and typing.List
+# - subprocess.run with capture_output parameter
