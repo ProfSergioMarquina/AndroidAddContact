@@ -1,172 +1,166 @@
-# Android Add Contact
+# Contact Manager
 
-An Android application for managing contacts with Python automation support.
+A Python CLI application for managing contacts with name, surname, email, and phone number.
 
 ## Features
 
-- **Add Contacts**: Create new contacts with name, surname, email, and/or phone number
-- **Edit Contacts**: Update existing contact information
-- **Complete Contacts**: Fill in missing information for partial contacts
+- **Add Contacts**: Create new contacts with any combination of fields
+- **Complete Contacts**: Fill in missing information for existing contacts
+- **Update Contacts**: Modify existing contact information
 - **Search**: Find contacts by name, email, or phone
-- **Python Automation**: Add or complete contacts programmatically via ADB
+- **Import/Export**: Batch operations via JSON files
+- **SQLite Storage**: Persistent local database
 
 ## Project Structure
 
 ```
-AndroidAddContact/
-├── app/                          # Android application
-│   ├── src/main/
-│   │   ├── java/com/example/addcontact/
-│   │   │   ├── data/            # Room database, entities, DAO
-│   │   │   ├── ui/              # Activities and dialogs
-│   │   │   ├── adapter/         # RecyclerView adapter
-│   │   │   └── AddContactReceiver.kt  # Broadcast receiver for automation
-│   │   └── res/                 # Resources (layouts, values, drawables)
-│   └── build.gradle.kts
-├── automation/                   # Python automation scripts
-│   ├── contact_manager.py       # Main automation script
-│   ├── sample_contacts.json     # Example contacts file
-│   └── requirements.txt
-├── build.gradle.kts
-└── settings.gradle.kts
+ContactManager/
+├── src/
+│   ├── contact.py           # Contact data model
+│   ├── storage.py           # SQLite database storage
+│   └── contact_manager.py   # CLI application
+├── sample_contacts.json     # Example contacts file
+└── README.md
 ```
 
-## Building the Android App
-
-### Prerequisites
-
-- Android Studio Arctic Fox or later
-- JDK 17+
-- Android SDK with API level 34
-
-### Build Steps
-
-1. Open the project in Android Studio
-2. Sync Gradle files
-3. Build and run on a device or emulator
-
-Or build via command line:
-
-```bash
-./gradlew assembleDebug
-```
-
-## Python Automation
-
-The Python script uses ADB to communicate with the Android app, allowing automated contact management.
-
-### Prerequisites
+## Requirements
 
 - Python 3.7+
-- ADB installed and in PATH
-- Android device connected via USB (with USB debugging enabled) or emulator running
-- AddContact app installed on the device
+- No external dependencies (uses only standard library)
 
-### Usage
+## Usage
 
-#### Add a single contact
+### Add a contact
 
 ```bash
-python automation/contact_manager.py add \
+# Full contact
+python src/contact_manager.py add \
     --first-name "John" \
     --last-name "Doe" \
     --email "john@example.com" \
     --phone "+1234567890"
+
+# Partial contact - only email
+python src/contact_manager.py add --email "support@company.com"
+
+# Partial contact - only phone
+python src/contact_manager.py add --phone "+1234567890"
+
+# Partial contact - only name
+python src/contact_manager.py add --first-name "John" --last-name "Doe"
 ```
 
-#### Add contact with partial information
+### List all contacts
 
 ```bash
-# Only email
-python automation/contact_manager.py add --email "support@company.com"
-
-# Only phone number
-python automation/contact_manager.py add --phone "+1234567890"
-
-# Only name
-python automation/contact_manager.py add --first-name "John" --last-name "Doe"
+python src/contact_manager.py list
 ```
 
-#### Complete/update an existing contact
+### Show contact details
 
 ```bash
-python automation/contact_manager.py complete \
-    --id 1 \
-    --email "updated@example.com" \
-    --phone "+0987654321"
+python src/contact_manager.py show 1
 ```
 
-#### Batch add contacts from JSON file
+### Complete a contact (add missing information)
 
 ```bash
-python automation/contact_manager.py batch --file automation/sample_contacts.json
+# Add email to existing contact
+python src/contact_manager.py complete 1 --email "john.doe@example.com"
+
+# Add phone and email
+python src/contact_manager.py complete 1 --phone "+1234567890" --email "new@example.com"
 ```
 
-#### Batch complete contacts
+### Update a contact
 
 ```bash
-python automation/contact_manager.py batch \
-    --file updates.json \
-    --mode complete
+python src/contact_manager.py update 1 --first-name "Jonathan"
 ```
 
-### JSON Format
+### Search contacts
 
-For batch operations, use this JSON format:
+```bash
+python src/contact_manager.py search "john"
+python src/contact_manager.py search "@example.com"
+python src/contact_manager.py search "+123"
+```
+
+### Delete a contact
+
+```bash
+# With confirmation
+python src/contact_manager.py delete 1
+
+# Skip confirmation
+python src/contact_manager.py delete 1 --force
+```
+
+### Import contacts from JSON
+
+```bash
+python src/contact_manager.py import sample_contacts.json
+```
+
+### Export contacts to JSON
+
+```bash
+python src/contact_manager.py export backup.json
+```
+
+### Use a different database file
+
+```bash
+python src/contact_manager.py --db mycontacts.db list
+python src/contact_manager.py --db mycontacts.db add --first-name "John"
+```
+
+## JSON Format
+
+For import/export operations, use this JSON format:
 
 ```json
 [
     {
-        "firstName": "John",
-        "lastName": "Doe",
+        "first_name": "John",
+        "last_name": "Doe",
         "email": "john@example.com",
         "phone": "+1234567890"
     },
     {
-        "firstName": "Jane",
+        "first_name": "Jane",
         "email": "jane@example.com"
-    }
-]
-```
-
-For completing contacts, include the `id` field:
-
-```json
-[
-    {
-        "id": 1,
-        "email": "updated@example.com"
     },
     {
-        "id": 2,
         "phone": "+1122334455"
     }
 ]
 ```
 
-## Architecture
+## Commands Reference
 
-### Android App
+| Command    | Description                              |
+|------------|------------------------------------------|
+| `add`      | Add a new contact                        |
+| `list`     | List all contacts                        |
+| `show`     | Show details of a specific contact       |
+| `complete` | Add missing info to an existing contact  |
+| `update`   | Update an existing contact               |
+| `delete`   | Delete a contact                         |
+| `search`   | Search contacts by any field             |
+| `import`   | Import contacts from a JSON file         |
+| `export`   | Export contacts to a JSON file           |
 
-- **Room Database**: Local SQLite database for persistent storage
-- **Repository Pattern**: Single source of truth for contact data
-- **Kotlin Coroutines**: Asynchronous database operations
-- **Material Design**: Modern Android UI components
-- **BroadcastReceiver**: Receives intents from ADB for automation
+## Options
 
-### Automation
-
-- **ADB Integration**: Uses Android Debug Bridge for communication
-- **Dataclass Models**: Type-safe contact representation
-- **Batch Processing**: Efficient handling of multiple contacts
-- **Error Handling**: Robust error handling with clear messages
-
-## Permissions
-
-The app requests the following permissions for potential future integration with the system contacts:
-
-- `READ_CONTACTS`: Read system contacts
-- `WRITE_CONTACTS`: Write to system contacts
+| Option          | Short | Description                    |
+|-----------------|-------|--------------------------------|
+| `--db`          | `-d`  | Database file path             |
+| `--first-name`  | `-f`  | First name                     |
+| `--last-name`   | `-l`  | Last name                      |
+| `--email`       | `-e`  | Email address                  |
+| `--phone`       | `-p`  | Phone number                   |
+| `--force`       | `-y`  | Skip confirmation (for delete) |
 
 ## License
 
